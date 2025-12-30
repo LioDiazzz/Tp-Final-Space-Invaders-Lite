@@ -132,6 +132,14 @@ class Bala {
                 tempo = clock();
             }
         }
+
+        int getX() { return x; }
+        int getY() { return y; }
+
+        void desactivar() {
+            activa = false;
+        }
+
 };
 
 class Enemy {
@@ -215,9 +223,14 @@ int dir = 1;
 clock_t tempoEnemigos;
 clock_t pasoEnemigos = CLOCKS_PER_SEC / 8;
 
+int enemigosRestantes = 0;
+int puntaje = 0;
+
+
 void crearEnemigos() {
 
     cantEnemigos = 0;
+    enemigosRestantes = 0;
 
     int inicioX = 10;
     int inicioY = 5;
@@ -235,6 +248,7 @@ void crearEnemigos() {
 
             enemigos[cantEnemigos]->dibujar();
             cantEnemigos++;
+            enemigosRestantes++;
         }
     }
 
@@ -277,6 +291,31 @@ void moverEnemigos() {
     }
 
     tempoEnemigos = clock();
+}
+
+void detectarColisionBala(Bala& bala) {
+
+    if (!bala.estaActiva())
+        return;
+
+    for (int i = 0; i < cantEnemigos; i++) {
+
+        if (!enemigos[i]->estaVivo())
+            continue;
+
+        if (bala.getX() == enemigos[i]->getX() &&
+            bala.getY() == enemigos[i]->getY()) {
+
+            enemigos[i]->destruir();
+
+            enemigosRestantes--;
+            puntaje += 10;
+
+            bala.desactivar();
+
+            break;
+        }
+    }
 }
 
 
@@ -334,6 +373,7 @@ void loopJuego() {
     while (true) {
 
         bala.mover();
+        detectarColisionBala(bala);
         moverEnemigos();
 
         // Entrada de teclado
@@ -349,7 +389,28 @@ void loopJuego() {
             if (tecla == 'd' || tecla == 'D')
                 jugador.moverDerecha();
 
+            if (tecla == ' ') {
+                if (!bala.estaActiva()) {
+                    bala.dispararDesde(jugador.getX(), jugador.getY());
+                }
+            }
+
             jugador.dibujar();
+        }
+
+        if (enemigosRestantes == 0) {
+
+            limpiarPantalla();
+
+            textcolor(10);
+            gotoxy(30, 10);
+            cout << "VICTORIA";
+
+            gotoxy(28, 12);
+            cout << "Puntaje: " << puntaje;
+
+            _getch();
+            exit(0);
         }
     }
 }
