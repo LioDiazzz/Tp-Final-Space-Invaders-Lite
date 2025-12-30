@@ -63,6 +63,67 @@ class Player {
         int getY() { return y; }
 };
 
+class Bala {
+
+    int x;
+    int y;
+    bool activa;
+    clock_t tempo;
+    clock_t paso;
+    char forma;
+
+    public:
+
+        Bala(int velocidad = 25, char f = '|') {
+            activa = false;
+            forma = f;
+            paso = CLOCKS_PER_SEC / velocidad;
+            tempo = clock();
+        }
+
+        bool estaActiva() {
+            return activa;
+        }
+
+        void dispararDesde(int px, int py) {
+            if (!activa) {
+                x = px;
+                y = py - 1;
+                activa = true;
+            }
+        }
+
+        void borrar() {
+            gotoxy(x, y);
+            cout << ' ';
+        }
+
+        void dibujar() {
+            gotoxy(x, y);
+            cout << forma;
+        }
+
+        void mover() {
+
+            if (!activa)
+                return;
+
+            if (tempo + paso < clock()) {
+
+                borrar();
+                y--;
+
+                if (y <= 1) {
+                    activa = false;
+                    return;
+                }
+
+                dibujar();
+                tempo = clock();
+            }
+        }
+};
+
 
 void pantallaBienvenida();
 void loopJuego();
@@ -106,8 +167,13 @@ void pantallaBienvenida() {
 void loopJuego() {
 
     Player jugador(ANCHO / 2, ALTO - 2);
+    Bala bala;
+
+    jugador.dibujar();
 
     while (true) {
+
+        bala.mover();
 
         // Entrada de teclado
         if (_kbhit()) {
