@@ -142,6 +142,71 @@ class Bala {
 
 };
 
+class BalaEnemiga {
+
+    int x;
+    int y;
+    bool activa;
+    clock_t tempo;
+    clock_t paso;
+    char forma;
+
+    public:
+
+        BalaEnemiga(int velocidad = 20, char f = '|') {
+            activa = false;
+            forma = f;
+            paso = CLOCKS_PER_SEC / velocidad;
+            tempo = clock();
+        }
+
+        bool estaActiva() {
+            return activa;
+        }
+
+        void dispararDesde(int px, int py) {
+            if (!activa) {
+                x = px;
+                y = py + 1;
+                activa = true;
+            }
+        }
+
+        void borrar() {
+            gotoxy(x, y);
+            cout << ' ';
+        }
+
+        void dibujar() {
+            gotoxy(x, y);
+            cout << forma;
+        }
+
+        void mover() {
+
+            if (!activa)
+                return;
+
+            if (tempo + paso < clock()) {
+
+                borrar();
+                y++;
+
+                if (y >= ALTO - 1) {
+                    activa = false;
+                    return;
+                }
+
+                dibujar();
+                tempo = clock();
+            }
+        }
+
+        int getX() { return x; }
+        int getY() { return y; }
+};
+
+
 class Enemy {
 
     protected:
@@ -293,6 +358,30 @@ void moverEnemigos() {
     tempoEnemigos = clock();
 }
 
+void disparoEnemigoAleatorio(BalaEnemiga& balaE) {
+
+    if (balaE.estaActiva())
+        return;
+
+    int indice = rand() % cantEnemigos;
+
+    for (int i = 0; i < cantEnemigos; i++) {
+
+        int idx = (indice + i) % cantEnemigos;
+
+        if (enemigos[idx]->estaVivo()) {
+
+            balaE.dispararDesde(
+                enemigos[idx]->getX(),
+                enemigos[idx]->getY()
+            );
+
+            break;
+        }
+    }
+}
+
+
 void detectarColisionBala(Bala& bala) {
 
     if (!bala.estaActiva())
@@ -365,6 +454,7 @@ void loopJuego() {
 
     Player jugador(ANCHO / 2, ALTO - 2);
     Bala bala;
+    BalaEnemiga balaEnemiga;
 
     jugador.dibujar();
 
@@ -373,8 +463,15 @@ void loopJuego() {
     while (true) {
 
         bala.mover();
+
         detectarColisionBala(bala);
+
         moverEnemigos();
+
+        balaEnemiga.mover();
+
+        disparoEnemigoAleatorio(balaEnemiga);
+
 
         // Entrada de teclado
         if (_kbhit()) {
