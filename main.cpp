@@ -22,12 +22,14 @@ void textcolor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
-Enemy* enemigos[20];
-int cantEnemigos = 0;
-
-int dir = 1;
-clock_t tempoEnemigos;
-clock_t pasoEnemigos = CLOCKS_PER_SEC / 8;
+void limpiarPantalla() {
+    for (int y = 1; y < ALTO; y++) {
+        for (int x = 1; x < ANCHO; x++) {
+            gotoxy(x, y);
+            cout << ' ';
+        }
+    }
+}
 
 
 class Player {
@@ -206,6 +208,13 @@ class EnemyTipoB : public Enemy {
         }   
 };
 
+Enemy* enemigos[20];
+int cantEnemigos = 0;
+
+int dir = 1;
+clock_t tempoEnemigos;
+clock_t pasoEnemigos = CLOCKS_PER_SEC / 8;
+
 void crearEnemigos() {
 
     cantEnemigos = 0;
@@ -309,6 +318,8 @@ void pantallaBienvenida() {
     cout << "Presione una tecla para comenzar..." << endl;
 
     _getch();
+
+	limpiarPantalla();
 }
 
 void loopJuego() {
