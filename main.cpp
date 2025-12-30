@@ -22,6 +22,14 @@ void textcolor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 }
 
+Enemy* enemigos[20];
+int cantEnemigos = 0;
+
+int dir = 1;
+clock_t tempoEnemigos;
+clock_t pasoEnemigos = CLOCKS_PER_SEC / 8;
+
+
 class Player {
 
     int x;
@@ -124,6 +132,145 @@ class Bala {
         }
 };
 
+class Enemy {
+
+    protected:
+        int x;
+        int y;
+        char forma;
+        int color;
+        bool vivo;
+
+    public:
+
+        Enemy(int px = 0, int py = 0, char f = 'X', int c = 12) {
+            x = px;
+            y = py;
+            forma = f;
+            color = c;
+            vivo = true;
+        }
+
+        virtual void dibujar() {
+            if (!vivo) return;
+            textcolor(color);
+            gotoxy(x, y);
+            cout << forma;
+        }
+
+        void borrar() {
+            gotoxy(x, y);
+            cout << ' ';
+        }
+
+        virtual void moverHorizontal(int dx) {
+            if (!vivo) return;
+            borrar();
+            x += dx;
+            dibujar();
+        }
+
+        void bajar() {
+            if (!vivo) return;
+            borrar();
+            y++;
+            dibujar();
+        }
+
+        int getX() { return x; }
+        int getY() { return y; }
+
+        bool estaVivo() { return vivo; }
+
+        virtual void destruir() {
+            vivo = false;
+            borrar();
+        }
+
+        virtual ~Enemy() {}
+};
+
+class EnemyTipoA : public Enemy {
+
+    public:
+        EnemyTipoA(int px, int py)
+            : Enemy(px, py, 'W', 14) {
+        }   
+};
+
+class EnemyTipoB : public Enemy {
+
+    public:
+        EnemyTipoB(int px, int py)
+            : Enemy(px, py, 'M', 10) {
+        }   
+};
+
+void crearEnemigos() {
+
+    cantEnemigos = 0;
+
+    int inicioX = 10;
+    int inicioY = 5;
+
+    for (int fila = 0; fila < 2; fila++) {
+        for (int col = 0; col < 10; col++) {
+
+            int px = inicioX + col * 3;
+            int py = inicioY + fila * 2;
+
+            if (fila == 0)
+                enemigos[cantEnemigos] = new EnemyTipoA(px, py);
+            else
+                enemigos[cantEnemigos] = new EnemyTipoB(px, py);
+
+            enemigos[cantEnemigos]->dibujar();
+            cantEnemigos++;
+        }
+    }
+
+    tempoEnemigos = clock();
+}
+
+void moverEnemigos() {
+
+    if (tempoEnemigos + pasoEnemigos > clock())
+        return;
+
+    bool tocaronBorde = false;
+
+    for (int i = 0; i < cantEnemigos; i++) {
+
+        if (!enemigos[i]->estaVivo())
+            continue;
+
+        int x = enemigos[i]->getX();
+
+        if ((dir == 1 && x >= ANCHO - 3) ||
+            (dir == -1 && x <= 2)) {
+
+            tocaronBorde = true;
+            break;
+        }
+    }
+
+    if (tocaronBorde) {
+
+        for (int i = 0; i < cantEnemigos; i++)
+            enemigos[i]->bajar();
+
+        dir *= -1;
+    }
+    else {
+
+        for (int i = 0; i < cantEnemigos; i++)
+            enemigos[i]->moverHorizontal(dir);
+    }
+
+    tempoEnemigos = clock();
+}
+
+
 
 void pantallaBienvenida();
 void loopJuego();
@@ -171,9 +318,12 @@ void loopJuego() {
 
     jugador.dibujar();
 
+    crearEnemigos();
+
     while (true) {
 
         bala.mover();
+        moverEnemigos();
 
         // Entrada de teclado
         if (_kbhit()) {
