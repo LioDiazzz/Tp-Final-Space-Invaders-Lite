@@ -69,6 +69,16 @@ class Player {
                 x++;
         }
 
+        void parpadear() {
+
+            for (int i = 0; i < 3; i++) {
+                borrar();
+                Sleep(80);
+                dibujar();
+                Sleep(80);
+            }
+        }
+
         int getX() { return x; }
         int getY() { return y; }
 };
@@ -139,7 +149,6 @@ class Bala {
         void desactivar() {
             activa = false;
         }
-
 };
 
 class BalaEnemiga {
@@ -281,6 +290,7 @@ class EnemyTipoB : public Enemy {
         }   
 };
 
+//variables globales
 Enemy* enemigos[20];
 int cantEnemigos = 0;
 
@@ -290,7 +300,19 @@ clock_t pasoEnemigos = CLOCKS_PER_SEC / 8;
 
 int enemigosRestantes = 0;
 int puntaje = 0;
+int vidas = 3;
 
+
+void actualizarHUD() {
+
+    textcolor(15);
+
+    gotoxy(2, 1);
+    cout << "Vidas: " << vidas << "   ";
+
+    gotoxy(20, 1);
+    cout << "Puntaje: " << puntaje << "   ";
+}
 
 void crearEnemigos() {
 
@@ -400,9 +422,45 @@ void detectarColisionBala(Bala& bala) {
             enemigosRestantes--;
             puntaje += 10;
 
+            actualizarHUD();
+
             bala.desactivar();
 
             break;
+        }
+    }
+}
+
+void detectarImpactoJugador(Player& jugador, BalaEnemiga& balaE) {
+
+    if (!balaE.estaActiva())
+        return;
+
+    if (balaE.getX() == jugador.getX() &&
+        balaE.getY() == jugador.getY()) {
+
+        balaE.borrar();
+        vidas--;
+
+        actualizarHUD();
+
+        balaE = BalaEnemiga(); // resetea bala
+
+        jugador.parpadear();
+
+        if (vidas <= 0) {
+
+            limpiarPantalla();
+
+            textcolor(12);
+            gotoxy(30, 10);
+            cout << "GAME OVER";
+
+            gotoxy(28, 12);
+            cout << "Puntaje: " << puntaje;
+
+            _getch();
+            exit(0);
         }
     }
 }
@@ -460,6 +518,9 @@ void loopJuego() {
 
     crearEnemigos();
 
+    actualizarHUD();
+
+
     while (true) {
 
         bala.mover();
@@ -471,6 +532,8 @@ void loopJuego() {
         balaEnemiga.mover();
 
         disparoEnemigoAleatorio(balaEnemiga);
+
+        detectarImpactoJugador(jugador, balaEnemiga);
 
 
         // Entrada de teclado
